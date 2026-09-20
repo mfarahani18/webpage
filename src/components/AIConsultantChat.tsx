@@ -91,7 +91,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
           "X-Title": "TSH Engineering Consultant",
         },
         body: JSON.stringify({
-          model: "google/gemma-4-31b:free",
+          model: "qwen/qwen3.8-27b:free",
           messages: [
             {
               role: "system",
