@@ -1,0 +1,6 @@
+{
+  "name": "TSH مطبوع شهر - تجهیزات سرمایش، گرمایش و آشپزخانه",
+  "description": "سامانه جامع، فروشگاه آنلاین و اپلیکیشن اندروید تجهیزات تأسیسات ساختمانی، سیستم‌های تهویه مطبوع، پکیج، رادیاتور و تجهیزات لوکس آشپزخانه مطبوع شهر (TSH)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
