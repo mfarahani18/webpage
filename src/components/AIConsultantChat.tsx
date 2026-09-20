@@ -32,6 +32,7 @@ const DEFAULT_SUGGESTIONS = [
   'بهترین ست هود مخفی و گاز صفحه‌ای برای آشپزخانه مدرن کدام است؟',
 ];
 
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
   isOpen,
   onClose,
@@ -80,24 +81,43 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://webpage-6rh8.onrender.com",
+          "X-Title": "TSH Comfort Solutions",
+        },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          model: "meta-llama/llama-3.3-70b-instruct:free",
+          messages: [
+            {
+              role: "system",
+              content: "شما مشاور و کارشناس ارشد مهندسی تاسیسات شرکت بازرگانی مطبوع شهر (TSH) هستید. لحن شما حرفه‌ای، مودبانه، فنی و راهنما است. تخصص شما روی پکیج دیواری (بوتان و ایران رادیاتور)، انواع رادیاتور (پنلی و پره‌ای)، کولر گازی و اسپلیت، تصفیه آب و تجهیزات آشپزخانه (هود، گاز، سینک) است. پاسخ‌ها را دقیق، علمی و با در نظر گرفتن اقلیم آب و هوایی گرم و خشک و آب سخت (مانند قم) ارائه دهید."
+            },
+            ...newMessages.map(m => ({ role: m.role, content: m.content }))
+          ],
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`Server returned status: ${response.status}`);
+      }
+
       const data = await response.json();
+      const replyContent = data.choices?.[0]?.message?.content || 'پاسخی از سمت هوش مصنوعی دریافت نشد.';
+
       const assistantReply: ChatMessage = {
         id: 'assistant-' + Date.now(),
         role: 'assistant',
-        content: data.reply || 'پاسخی از سمت سرور دریافت نشد.',
+        content: replyContent,
         timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages(prev => [...prev, assistantReply]);
     } catch (err) {
+      console.error("OpenRouter API Error:", err);
       const errorMsg: ChatMessage = {
         id: 'err-' + Date.now(),
         role: 'assistant',
@@ -171,7 +191,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
               <button
                 key={i}
                 onClick={() => handleSendMessage(sug)}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-slate-200 transition-colors whitespace-nowrap shadow-2xs"
+                className="text-[11px] px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-slate-200 transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
               >
                 {sug}
               </button>
@@ -257,7 +277,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="p-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white transition-colors shrink-0 shadow-xs"
+              className="p-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white transition-colors shrink-0 shadow-xs cursor-pointer"
               aria-label="ارسال پیام"
             >
               <Send className="w-4 h-4" />
