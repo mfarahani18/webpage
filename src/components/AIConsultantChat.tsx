@@ -28,7 +28,7 @@ const DEFAULT_SUGGESTIONS = [
   'بهترین ست هود مخفی و گاز صفحه‌ای برای آشپزخانه مدرن کدام است؟',
 ];
 
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 
 export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
   isOpen,
