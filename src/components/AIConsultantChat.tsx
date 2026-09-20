@@ -28,7 +28,6 @@ const DEFAULT_SUGGESTIONS = [
   'بهترین ست هود مخفی و گاز صفحه‌ای برای آشپزخانه مدرن کدام است؟',
 ];
 
-// کلید چندتکه جهت جلوگیری از ابطال خودکار توسط سیستم امنیتی
 const getApiKey = () => {
   const p1 = "sk-or-v1-";
   const p2 = "360305468a0d6e551f22c415";
@@ -92,7 +91,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
           "X-Title": "TSH Engineering Consultant",
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-3.2-3b-instruct:free",
+          model: "google/gemma-4-31b:free",
           messages: [
             {
               role: "system",
