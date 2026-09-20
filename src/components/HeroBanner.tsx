@@ -29,20 +29,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   return (
     <div className="relative overflow-hidden bg-[#0f1f3d] text-white py-10 sm:py-16 border-b border-blue-900/40">
       
-      {/* Background Video (1.mp4) */}
+{/* Background Video (1.mp4) */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 w-full h-full object-cover -z-0 opacity-40 pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover -z-0 opacity-90 pointer-events-none"
       >
         <source src="/1.mp4" type="video/mp4" />
       </video>
 
-      {/* Video Overlay Tint */}
-      <div className="absolute inset-0 bg-gradient-to-bl from-[#0f1f3d]/85 via-[#12284C]/80 to-[#1e3a5f]/85 pointer-events-none" />
-
+      {/* Video Overlay Tint (ملایم‌تر برای خوانایی متن‌ها) */}
+      <div className="absolute inset-0 bg-slate-950/40 pointer-events-none" />
       {/* Subtle Background Glows */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
