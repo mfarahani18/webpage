@@ -27,7 +27,22 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenCatalog,
 }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-bl from-[#0f1f3d] via-[#12284C] to-[#1e3a5f] text-white py-10 sm:py-16 border-b border-blue-900/40">
+    <div className="relative overflow-hidden bg-[#0f1f3d] text-white py-10 sm:py-16 border-b border-blue-900/40">
+      
+      {/* Background Video (1.mp4) */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover -z-0 opacity-40 pointer-events-none"
+      >
+        <source src="/1.mp4" type="video/mp4" />
+      </video>
+
+      {/* Video Overlay Tint */}
+      <div className="absolute inset-0 bg-gradient-to-bl from-[#0f1f3d]/85 via-[#12284C]/80 to-[#1e3a5f]/85 pointer-events-none" />
+
       {/* Subtle Background Glows */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -63,7 +78,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 id="hero-calc-cta"
                 onClick={onOpenCalculator}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg hover:shadow-amber-500/25 transition-all transform hover:-translate-y-0.5"
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg hover:shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
               >
                 <Calculator className="w-4 h-4" />
                 محاسبه آنلاین ظرفیت پکیج و کولر
@@ -73,7 +88,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 id="hero-bundles-cta"
                 onClick={onOpenBundles}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-sm sm:text-base transition-all backdrop-blur-xs"
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-sm sm:text-base transition-all backdrop-blur-xs cursor-pointer"
               >
                 <Package className="w-4 h-4 text-amber-300" />
                 پک‌های باندل تخفیف‌دار سازندگان
@@ -82,7 +97,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 id="hero-chat-cta"
                 onClick={onOpenChat}
-                className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-400/30 font-medium text-sm transition-all"
+                className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-400/30 font-medium text-sm transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 مشاوره هوش مصنوعی
@@ -110,17 +125,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </div>
 
-          {/* Visual Showcase Column (Matching User's Brand Imagery) */}
+          {/* Visual Showcase Column (Image 3 Showcase) */}
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-2xl overflow-hidden border border-blue-400/20 shadow-2xl bg-slate-900/60 group">
               
-              {/* Image banner representing TSH Modern Comfort Solutions */}
               <div className="relative h-72 sm:h-84 overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=85"
+                  src="/3.jpg"
                   alt="مطبوع شهر TSH تجهیزات سرمایش گرمایش و آشپزخانه"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#12284C] via-[#12284C]/40 to-transparent" />
                 
