@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  X, 
-  Send, 
-  Sparkles, 
-  Bot, 
-  User, 
-  Trash2
+```tsx
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  X,
+  Send,
+  Sparkles,
+  Bot,
+  User,
+  Trash2,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -28,14 +29,50 @@ const DEFAULT_SUGGESTIONS = [
   'بهترین ست هود مخفی و گاز صفحه‌ای برای آشپزخانه مدرن کدام است؟',
 ];
 
-// کلید رمزنگاری‌شده چندتکه جهت جلوگیری از شناسایی توسط اسکنر امنیتی
-const getApiKey = () => {
-  const p1 = "sk-or-v1-";
-  const p2 = "360305468a0d6e551f22c415";
-  const p3 = "d63bbcee062b3d24fd2736fd";
-  const p4 = "de3cd89b20baa4be";
-  return `${p1}${p2}${p3}${p4}`;
-};
+const SYSTEM_PROMPT = `
+شما کارشناس ارشد مهندسی فروش و تأسیسات شرکت بازرگانی مطبوع شهر (TSH) هستید.
+
+به تمام سوالات کاربران درباره موارد زیر پاسخ دهید:
+
+- انواع پکیج دیواری بوتان و ایران رادیاتور
+- رادیاتورهای پره‌ای و پنلی
+- اسپلیت
+- کولر گازی
+- تجهیزات آشپزخانه
+
+پاسخ‌ها باید:
+
+- تخصصی
+- مودبانه
+- دقیق
+- قابل فهم
+- کاربردی
+
+باشند.
+
+شرایط آب‌وهوایی گرم و خشک و همچنین آب سخت را در پیشنهادهای فنی لحاظ کنید.
+
+اگر اطلاعات کافی برای یک پیشنهاد دقیق ندارید، ابتدا اطلاعات موردنیاز را از کاربر بپرسید.
+`;
+
+const getTime = () =>
+  new Date().toLocaleTimeString('fa-IR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const createMessage = (
+  role: ChatMessage['role'],
+  content: string,
+  idPrefix: string,
+): ChatMessage => ({
+  id: `${idPrefix}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`,
+  role,
+  content,
+  timestamp: getTime(),
+});
 
 export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
   isOpen,
@@ -43,92 +80,172 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
   initialTopic,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome-msg',
-      role: 'assistant',
-      content: 'سلام و احترام! من کارشناس ارشد مهندسی فروش و تأسیسات بازرگانی مطبوع شهر (TSH) هستم. چطور می‌توانم در انتخاب پکیج، رادیاتور، کولر گازی یا تجهیزات آشپزخانه به شما کمک کنم؟',
-      timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-    }
+    createMessage(
+      'assistant',
+      'سلام و احترام! من کارشناس ارشد مهندسی فروش و تأسیسات بازرگانی مطبوع شهر (TSH) هستم. چطور می‌توانم در انتخاب پکیج، رادیاتور، کولر گازی یا تجهیزات آشپزخانه به شما کمک کنم؟',
+      'welcome',
+    ),
   ]);
+
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastInitialTopicRef = useRef<string | null>(null);
+
+  /*
+   * اسکرول خودکار به آخرین پیام
+   */
   useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (!isOpen) return;
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
   }, [messages, isOpen]);
 
+  /*
+   * ارسال خودکار initialTopic
+   *
+   * فقط وقتی topic واقعاً تغییر کرده باشد
+   * ارسال می‌شود.
+   */
   useEffect(() => {
-    if (initialTopic && isOpen) {
-      handleSendMessage(initialTopic);
+    if (!isOpen || !initialTopic) return;
+
+    const topic = initialTopic.trim();
+
+    if (!topic) return;
+
+    if (lastInitialTopicRef.current === topic) {
+      return;
     }
+
+    lastInitialTopicRef.current = topic;
+
+    void handleSendMessage(topic);
   }, [initialTopic, isOpen]);
 
   const handleSendMessage = async (textToSend?: string) => {
-    const text = (textToSend || inputMessage).trim();
-    if (!text || isLoading) return;
+    const text = (textToSend ?? inputMessage).trim();
 
-    const userMsg: ChatMessage = {
-      id: 'user-' + Date.now(),
-      role: 'user',
-      content: text,
-      timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-    };
+    if (!text || isLoading) {
+      return;
+    }
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    if (!textToSend) setInputMessage('');
+    const userMsg = createMessage(
+      'user',
+      text,
+      'user',
+    );
+
+    /*
+     * برای جلوگیری از مشکل stale state،
+     * پیام را با functional update اضافه می‌کنیم.
+     */
+    setMessages((prev) => [...prev, userMsg]);
+
+    if (!textToSend) {
+      setInputMessage('');
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
+      /*
+       * API فقط به backend خودمان درخواست می‌فرستد.
+       */
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          "Authorization": `Bearer ${getApiKey()}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://webpage-6rh8.onrender.com",
-          "X-Title": "TSH Engineering Consultant",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "qwen/qwen3.8-27b:free",
           messages: [
             {
-              role: "system",
-              content: "شما کارشناس ارشد مهندسی فروش و تأسیسات شرکت بازرگانی مطبوع شهر (TSH) هستید. به تمام سوالات کاربران درباره انواع پکیج دیواری (بوتان و ایران رادیاتور)، رادیاتورهای پره‌ای و پنلی، اسپلیت، کولر گازی و تجهیزات آشپزخانه با لحنی تخصصی، مودبانه، دقیق و راهنما پاسخ دهید. شرایط آب‌وهوایی گرم و خشک و آب سخت را در پیشنهادهای فنی لحاظ کنید."
+              role: 'system',
+              content: SYSTEM_PROMPT,
             },
-            ...newMessages.map(m => ({ role: m.role, content: m.content }))
+
+            /*
+             * نکته:
+             * اینجا messages فعلی + userMsg ارسال می‌شوند.
+             */
+            ...messages.map((message) => ({
+              role: message.role,
+              content: message.content,
+            })),
+
+            {
+              role: userMsg.role,
+              content: userMsg.content,
+            },
           ],
         }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        console.error("OpenRouter Raw Error:", errJson);
-        throw new Error(`OpenRouter status: ${response.status}`);
+        console.error('Chat API Error:', data);
+
+        if (response.status === 429) {
+          throw new Error(
+            'سرویس هوش مصنوعی در حال حاضر با محدودیت درخواست مواجه است. لطفاً چند لحظه دیگر دوباره تلاش کنید.',
+          );
+        }
+
+        if (response.status === 401) {
+          throw new Error(
+            'خطای احراز هویت سرویس هوش مصنوعی رخ داده است.',
+          );
+        }
+
+        if (response.status === 500) {
+          throw new Error(
+            'خطایی در سرور هوش مصنوعی رخ داده است.',
+          );
+        }
+
+        throw new Error(
+          data?.error ||
+            'ارتباط با سرویس هوش مصنوعی با خطا مواجه شد.',
+        );
       }
 
-      const data = await response.json();
-      const replyContent = data.choices?.[0]?.message?.content || 'پاسخی از سمت هوش مصنوعی دریافت نشد.';
+      const replyContent =
+        data?.reply ||
+        data?.choices?.[0]?.message?.content ||
+        'پاسخی از سمت هوش مصنوعی دریافت نشد.';
 
-      const assistantReply: ChatMessage = {
-        id: 'assistant-' + Date.now(),
-        role: 'assistant',
-        content: replyContent,
-        timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-      };
+      const assistantReply = createMessage(
+        'assistant',
+        replyContent,
+        'assistant',
+      );
 
-      setMessages(prev => [...prev, assistantReply]);
-    } catch (err) {
-      console.error("Chat error:", err);
-      const errorMsg: ChatMessage = {
-        id: 'err-' + Date.now(),
-        role: 'assistant',
-        content: 'در برقراری ارتباط با سرویس هوش مصنوعی خطایی رخ داد. لطفاً لحظاتی دیگر مجدداً تلاش کنید.',
-        timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        assistantReply,
+      ]);
+    } catch (error) {
+      console.error('Chat error:', error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'در برقراری ارتباط با سرویس هوش مصنوعی خطایی رخ داد.';
+
+      const errorMsg = createMessage(
+        'assistant',
+        errorMessage,
+        'error',
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        errorMsg,
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -136,22 +253,30 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
 
   const handleClearHistory = () => {
     setMessages([
-      {
-        id: 'welcome-reset',
-        role: 'assistant',
-        content: 'گفتگو بازنشانی شد. چطور می‌توانم در خصوص تأسیسات سرمایش، گرمایش و آشپزخانه راهنمایی‌تان کنم؟',
-        timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-      }
+      createMessage(
+        'assistant',
+        'گفتگو بازنشانی شد. چطور می‌توانم در خصوص تأسیسات سرمایش، گرمایش و آشپزخانه راهنمایی‌تان کنم؟',
+        'welcome-reset',
+      ),
     ]);
+
+    setInputMessage('');
+
+    /*
+     * اجازه می‌دهیم initialTopic دوباره ارسال شود.
+     */
+    lastInitialTopicRef.current = null;
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div 
+      <div
         className="relative bg-white w-full sm:max-w-lg h-full sm:h-[88vh] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-[#12284C] text-white p-4 flex items-center justify-between border-b border-blue-900 shrink-0">
@@ -159,25 +284,35 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md">
               <Bot className="w-5 h-5 text-amber-300" />
             </div>
+
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="font-extrabold text-sm sm:text-base">مشاور مهندسی TSH</h3>
+                <h3 className="font-extrabold text-sm sm:text-base">
+                  مشاور مهندسی TSH
+                </h3>
+
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <div className="text-[11px] text-blue-200">هوش مصنوعی تخصصی تأسیسات و آشپزخانه</div>
+
+              <div className="text-[11px] text-blue-200">
+                هوش مصنوعی تخصصی تأسیسات و آشپزخانه
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={handleClearHistory}
               className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors text-xs flex items-center gap-1 cursor-pointer"
               title="پاکسازی تاریخچه گفتگو"
+              aria-label="پاکسازی تاریخچه گفتگو"
             >
               <Trash2 className="w-4 h-4" />
             </button>
 
             <button
+              type="button"
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors cursor-pointer"
               aria-label="بستن چت"
@@ -190,16 +325,25 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
         {/* Suggestion Chips */}
         <div className="p-2.5 bg-slate-50 border-b border-slate-200 overflow-x-auto scrollbar-none shrink-0">
           <div className="flex items-center gap-1.5 min-w-max">
-            <span className="text-[11px] text-slate-500 font-bold ml-1">پرسش‌های پرتکرار:</span>
-            {DEFAULT_SUGGESTIONS.map((sug, i) => (
-              <button
-                key={i}
-                onClick={() => handleSendMessage(sug)}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-slate-200 transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
-              >
-                {sug}
-              </button>
-            ))}
+            <span className="text-[11px] text-slate-500 font-bold ml-1">
+              پرسش‌های پرتکرار:
+            </span>
+
+            {DEFAULT_SUGGESTIONS.map(
+              (suggestion, index) => (
+                <button
+                  key={`${suggestion}-${index}`}
+                  type="button"
+                  onClick={() =>
+                    void handleSendMessage(suggestion)
+                  }
+                  disabled={isLoading}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-slate-200 transition-colors whitespace-nowrap shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {suggestion}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -207,17 +351,28 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-100/60">
           {messages.map((msg) => {
             const isUser = msg.role === 'user';
+
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                className={`flex gap-2.5 ${
+                  isUser
+                    ? 'flex-row-reverse'
+                    : 'flex-row'
+                }`}
               >
                 <div
                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${
-                    isUser ? 'bg-blue-700 text-white' : 'bg-[#12284C] text-amber-300'
+                    isUser
+                      ? 'bg-blue-700 text-white'
+                      : 'bg-[#12284C] text-amber-300'
                   }`}
                 >
-                  {isUser ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                  {isUser ? (
+                    <User className="w-4 h-4" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
                 </div>
 
                 <div
@@ -228,9 +383,12 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
                   }`}
                 >
                   <div>{msg.content}</div>
+
                   <div
                     className={`text-[10px] mt-1.5 text-left ${
-                      isUser ? 'text-blue-200' : 'text-slate-400'
+                      isUser
+                        ? 'text-blue-200'
+                        : 'text-slate-400'
                     }`}
                   >
                     {msg.timestamp}
@@ -240,16 +398,21 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
             );
           })}
 
+          {/* Loading */}
           {isLoading && (
             <div className="flex gap-2.5 items-center">
               <div className="w-7 h-7 rounded-lg bg-[#12284C] text-amber-300 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 animate-spin" />
               </div>
+
               <div className="bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-tl-none p-3 text-xs flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" />
                 <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce [animation-delay:0.2s]" />
                 <span className="w-2 h-2 rounded-full bg-blue-600 animate-bounce [animation-delay:0.4s]" />
-                <span className="text-[11px]">کارشناس TSH در حال تحلیل و پاسخگویی...</span>
+
+                <span className="text-[11px]">
+                  کارشناس TSH در حال تحلیل و پاسخگویی...
+                </span>
               </div>
             </div>
           )}
@@ -257,37 +420,53 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Form */}
+        {/* Input */}
         <div className="p-3 bg-white border-t border-slate-200 shrink-0">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSendMessage();
             }}
             className="flex items-center gap-2"
           >
             <input
               type="text"
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={(event) =>
+                setInputMessage(event.target.value)
+              }
               placeholder="سوال خود در مورد پکیج، کولر گازی، رادیاتور یا قیمت را بنویسید..."
               className="flex-1 p-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-600 outline-hidden text-slate-900"
+              disabled={isLoading}
             />
+
             <button
               type="submit"
-              disabled={!inputMessage.trim() || isLoading}
+              disabled={
+                !inputMessage.trim() || isLoading
+              }
               className="p-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white transition-colors shrink-0 shadow-xs cursor-pointer"
               aria-label="ارسال پیام"
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
+
           <div className="text-[10px] text-slate-700 text-center mt-1.5">
-            پشتیبانی شده توسط هوش مصنوعی مهندسی تأسیسات TSH (مطبوع شهر)
+            پشتیبانی شده توسط هوش مصنوعی مهندسی تأسیسات TSH
+            (مطبوع شهر)
           </div>
         </div>
-
       </div>
     </div>
   );
 };
+```
+
+### یک نکته مهم
+
+مشکل اصلی نسخه قبلی این قسمت بود که `setMessages(newMessages)` انجام می‌شد ولی برای درخواست API از همان `newMessages` استفاده می‌کرد. در نسخه بالا این بخش به شکل مشخصی مدیریت شده و `userMsg` مستقیماً به history ارسالی اضافه می‌شود.
+
+همچنین `id` پیام‌ها را از حالت صرفاً `Date.now()` خارج کردم تا اگر دو پیام تقریباً هم‌زمان ساخته شوند، احتمال تکراری شدن `key` کمتر شود.
+
+اگر خطایی که الان داری **مربوط به `/api/chat` یا OpenRouter و خطای 429** است، این فایل به‌تنهایی مشکل را حل نمی‌کند؛ آن قسمت مربوط به `server.ts`/backend است و باید کد backend را هم اصلاح کنیم.
