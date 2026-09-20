@@ -1,5 +1,5 @@
 import { Product, BundlePack, StrategyModule } from '../types';
-import img2 from '../assets/2.jpg';
+const img2 = '/2.jpg';
 
 export const CATEGORIES = [
   { id: 'all', title: 'همه محصولات', icon: 'LayoutGrid' },
