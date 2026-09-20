@@ -5,11 +5,7 @@ import {
   Sparkles, 
   Bot, 
   User, 
-  Trash2, 
-  Building2, 
-  RotateCcw,
-  Flame,
-  Wind
+  Trash2
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -32,7 +28,9 @@ const DEFAULT_SUGGESTIONS = [
   'بهترین ست هود مخفی و گاز صفحه‌ای برای آشپزخانه مدرن کدام است؟',
 ];
 
-const OPENROUTER_API_KEY = "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";export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
+const OPENROUTER_API_KEY = "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";
+
+export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
   isOpen,
   onClose,
   initialTopic,
@@ -49,14 +47,12 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
 
-  // Handle initial topic injection if passed
   useEffect(() => {
     if (initialTopic && isOpen) {
       handleSendMessage(initialTopic);
@@ -86,14 +82,14 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
           "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "https://webpage-6rh8.onrender.com",
-          "X-Title": "TSH Comfort Solutions",
+          "X-Title": "TSH Modern Comfort Solutions",
         },
         body: JSON.stringify({
           model: "meta-llama/llama-3.3-70b-instruct:free",
           messages: [
             {
               role: "system",
-              content: "شما مشاور و کارشناس ارشد مهندسی تاسیسات شرکت بازرگانی مطبوع شهر (TSH) هستید. لحن شما حرفه‌ای، مودبانه، فنی و راهنما است. تخصص شما روی پکیج دیواری (بوتان و ایران رادیاتور)، انواع رادیاتور (پنلی و پره‌ای)، کولر گازی و اسپلیت، تصفیه آب و تجهیزات آشپزخانه (هود، گاز، سینک) است. پاسخ‌ها را دقیق، علمی و با در نظر گرفتن اقلیم آب و هوایی گرم و خشک و آب سخت (مانند قم) ارائه دهید."
+              content: "شما کارشناس ارشد مهندسی فروش و تأسیسات شرکت بازرگانی مطبوع شهر (TSH) هستید. به تمام سوالات کاربران درباره انواع پکیج دیواری، رادیاتورهای پره‌ای و پنلی، اسپلیت و کولر گازی و تجهیزات آشپزخانه با لحنی تخصصی، مودبانه و راهنما پاسخ دهید. ویژگی‌های اقلیمی مناطق گرمسیری و آب‌های سخت را در پیشنهادهایتان لحاظ کنید."
             },
             ...newMessages.map(m => ({ role: m.role, content: m.content }))
           ],
@@ -101,7 +97,7 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned status: ${response.status}`);
+        throw new Error(`OpenRouter error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -116,11 +112,11 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
 
       setMessages(prev => [...prev, assistantReply]);
     } catch (err) {
-      console.error("OpenRouter API Error:", err);
+      console.error(err);
       const errorMsg: ChatMessage = {
         id: 'err-' + Date.now(),
         role: 'assistant',
-        content: 'در برقراری ارتباط با کارشناس هوشمند مشکلی پیش آمد. لطفاً از اتصال اینترنت خود اطمینان حاصل فرمایید یا مجدداً سوال فرمایید.',
+        content: 'در برقراری ارتباط با سرویس هوش مصنوعی خطایی رخ داد. لطفاً لحظاتی دیگر مجدداً تلاش کنید.',
         timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -207,18 +203,14 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
                 key={msg.id}
                 className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                {/* Avatar */}
                 <div
                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${
-                    isUser
-                      ? 'bg-blue-700 text-white'
-                      : 'bg-[#12284C] text-amber-300'
+                    isUser ? 'bg-blue-700 text-white' : 'bg-[#12284C] text-amber-300'
                   }`}
                 >
                   {isUser ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                 </div>
 
-                {/* Message Bubble */}
                 <div
                   className={`max-w-[82%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed shadow-xs ${
                     isUser
@@ -239,7 +231,6 @@ const OPENROUTER_API_KEY = "sk-or-v1-eb76c4cc8cd6c408d2c607ded092848c7fd9ac74276
             );
           })}
 
-          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex gap-2.5 items-center">
               <div className="w-7 h-7 rounded-lg bg-[#12284C] text-amber-300 flex items-center justify-center shrink-0">
