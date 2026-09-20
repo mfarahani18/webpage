@@ -94,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>قم، بلوار غدیر، مجتمع تخصصی تأسیسات و ساختمان مطبوع شهر</span>
+                <span>قم، بلوار انسجام  مجتمع تخصصی تأسیسات و ساختمان مطبوع شهر</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
