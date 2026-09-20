@@ -1,5 +1,5 @@
 import { Product, BundlePack, StrategyModule } from '../types';
-import img2 from '../assets/2.jfif';
+
 
 export const CATEGORIES = [
   { id: 'all', title: 'همه محصولات', icon: 'LayoutGrid' },
