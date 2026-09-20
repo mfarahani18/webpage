@@ -83,7 +83,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
     setIsLoading(true);
 
     try {
-      console.log("poolside/laguna-s-2.1:free");
+      console.log("cohere/north-mini-code:free");
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -93,7 +93,7 @@ export const AIConsultantChat: React.FC<AIConsultantChatProps> = ({
           "X-Title": "TSH Modern Comfort Solutions",
         },
         body: JSON.stringify({
-          model: "poolside/laguna-s-2.1:free",
+          model: "cohere/north-mini-code:free",
           messages: [
             {
               role: "system",
